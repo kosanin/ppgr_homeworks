@@ -21,6 +21,9 @@ tm = 1
 animation_ongoing = False
 camera_param = 0
 
+def degs2radians(euler_angles):
+    return list(map(lambda x : x * math.pi / 180, euler_angles))
+
 def string2floats(str):
     return list(map(float, str.split()))
 
@@ -58,10 +61,14 @@ def on_keyboard(key, x, y):
 def init():
     global src_q
     global dest_q
+    global src_euler_angles, dest_euler_angles
     glClearColor(0.7, 0.7, 0.7, 0)
     glEnable(GL_DEPTH_TEST)
     glLineWidth(2)
     read_centers_angles_t("data.txt")
+
+    src_euler_angles = degs2radians(src_euler_angles)
+    dest_euler_angles = degs2radians(dest_euler_angles)
 
     src_q = geometry.eulerAngles2quaternion(src_euler_angles[0], 
                                 src_euler_angles[1], 
