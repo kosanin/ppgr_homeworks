@@ -1,4 +1,63 @@
 import numpy as np
+import operator
+import functools
+
+
+def save_points(points, path):
+    with open(path, "w+") as f:
+        for k, v in points.items():
+            flattened_list_of_points = functools.reduce(operator.concat, v)
+            f.write(str(k) 
+                    + functools.reduce(lambda acc, val: acc + " " + str(val), flattened_list_of_points, "")
+                    + "\n")
+
+def get_hidden_point_from_ids(points, ids, camera_flag):
+    """
+    :param points: map
+    :param ids: list
+        lista id-va tacaka koje ucestvuju u dobijanju koordinata skrivene tacke.
+        prva dva id-a(id[0] i id[1]) predstavljaju kolinearne tacke, ciji vektor se sece
+        u tacki nedogleda sa vektorom tacaka id[2] i id[3]; analogno za sledeca 4 id-a
+        poslednja dva id-a predstavljaju tacke koje medjusobno nisu kolinearne,
+        ali su kolinearne sa skrivenom tackom. presek prava 
+        id[8] x tacka_nedogleda1 
+        id[9] x tacka_nedogleda2 daju skrivenu tacku
+    :param camera_flag: int
+    """
+    x_inf = vanishing_point(points[ids[0]][camera_flag],
+                            points[ids[1]][camera_flag],
+                            points[ids[2]][camera_flag],
+                            points[ids[3]][camera_flag])
+    
+    y_inf = vanishing_point(points[ids[4]][camera_flag],
+                            points[ids[5]][camera_flag],
+                            points[ids[6]][camera_flag],
+                            points[ids[7]][camera_flag])
+    
+    colinear_point1 = points[ids[8]][camera_flag]
+    colinear_point2 = points[ids[9]][camera_flag]
+
+    return hidden_point(colinear_point1, x_inf,
+                        colinear_point2, y_inf)
+
+
+def slika1():
+    points = read_two_camera_points("tacke.txt")
+
+    camera1_point5 = get_hidden_point_from_ids(points, [4, 8, 6, 2, 1, 4, 3, 2, 1, 8], 0)
+    camera2_point5 = get_hidden_point_from_ids(points, [4, 8, 6, 2, 1, 4, 3, 2, 1, 8], 1)
+    
+    camera1_point13 = get_hidden_point_from_ids(points, [10, 9, 11, 12, 10, 14, 11, 15, 14, 9], 0)
+    camera2_point13 = [1077, 269, 1]
+
+    camera1_point16 = get_hidden_point_from_ids(points, [10, 14, 11, 15, 9, 10, 11, 12, 12, 15], 0)
+    camera2_point16 = get_hidden_point_from_ids(points, [10, 14, 11, 15, 9, 10, 11, 12, 12, 15], 1)
+
+    points[5] = [camera1_point5, camera2_point5]
+    points[13] = [camera1_point13, camera2_point13]
+    points[16] = [camera1_point16, camera2_point16]
+
+    save_points(points, "slika1_input_points.txt")
 
 
 def hidden_point(colinear_pt1, vanishing_pt1,
@@ -13,10 +72,11 @@ def hidden_point(colinear_pt1, vanishing_pt1,
         colinear_pt2 i vanishing_pt2 pripadaju istoj pravi
     :return:
     """
-    return np.cross(
+    hidden_pt = np.cross(
         np.cross(colinear_pt1, vanishing_pt1),
         np.cross(colinear_pt2, vanishing_pt2)
     )
+    return to_affine_coordinates(hidden_pt)
 
 
 def vanishing_point(line1_pt1, line1_pt2,
@@ -29,13 +89,12 @@ def vanishing_point(line1_pt1, line1_pt2,
     return vanishing_point1
 
 
-def triangulation(camera1_pts, camera2_pts):
+def triangulation(points, fund_matrix):
 
-    fund_matrix = fundamental_matrix(camera1_pts, camera2_pts)
     camera1, camera2 = get_cameras_matrices(fund_matrix)
 
     reconstructed_3d_coordinates = []
-    for cam1_pt, cam2_pt in zip(camera1_pts, camera2_pts):
+    for cam1_pt, cam2_pt in points.values():
         reconstructed_3d_coordinates.append(
                     to_affine_coordinates(
                     reconstruct_point_coordinates(cam1_pt, cam2_pt, camera1, camera2))
@@ -55,7 +114,7 @@ def reconstruct_point_coordinates(camera1_pt, camera2_pt, camera1, camera2):
         (-np.dot(camera2_pt[0], camera2[2, :]) + camera2[0, :]).tolist()[0]
     ]
 
-    u, v, d = np.linalg.svd(linear_system, full_matrices=True)
+    _, _, d = np.linalg.svd(linear_system, full_matrices=True)
     return d[d.shape[0] - 1]
 
 
@@ -79,12 +138,13 @@ def get_cameras_matrices(fund_matrix):
 
 
 def to_affine_coordinates(homogeneous_point):
-    return homogeneous_point * (1 / homogeneous_point[len(homogeneous_point) - 1])
-
+    # return list(map(int, (homogeneous_point * (1 / homogeneous_point[len(homogeneous_point) - 1]))))
+    w = homogeneous_point[-1]
+    return np.multiply(1/w, homogeneous_point)
 
 def epipoles(fund_matrix):
 
-    u, d, v = np.linalg.svd(fund_matrix, full_matrices=True)
+    u, _, v = np.linalg.svd(fund_matrix, full_matrices=True)
 
     # pogledati materijale sa predavanja
     # v[2] vraca np.matrix, pa ga razmotavamo u listu sa tolist()[0]
@@ -114,7 +174,7 @@ def is_fundamental_matrix(matrix, camera1_pts, camera2_pts):
 
 def dlt(mat):
 
-    u, d, v = np.linalg.svd(mat, full_matrices=True)
+    _, _, v = np.linalg.svd(mat, full_matrices=True)
 
     # uzimmo poslednju vrstu
     last_row = v.shape[1] - 1
@@ -148,7 +208,7 @@ def read_two_camera_points(path):
     points = {}
     with open(path) as f:
         for line in f.readlines():
-            data = list(map(int, line.split()))
+            data = list(map(float, line.split()))
             id = data[0]
             first_camera_point_coordinates = data[1:4]
             second_camera_point_coordinates = data[4:7]
@@ -158,6 +218,14 @@ def read_two_camera_points(path):
 
 def main():
     pass
+    # points = read_two_camera_points("init_tacke.txt")
+    # k1 = list(map(lambda x : x[0], points.values()))
+    # k2 = list(map(lambda x : x[1], points.values()))
+    # f = fundamental_matrix(k1, k2)
+
+    # points = read_two_camera_points("slika1_input_points.txt")
+    # print(triangulation(points, f))
+
 
 
 if __name__ == '__main__':
