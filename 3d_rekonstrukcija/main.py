@@ -59,7 +59,6 @@ def on_display():
         0, 0, 0,
         0, 1, 0)
 
-    draw.coordinate_axes(1000)
     glTranslatef(-491, -1, 0)    
     draw.reconstructed_cubes(points)
     glutSwapBuffers()
