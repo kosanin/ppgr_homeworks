@@ -42,8 +42,8 @@ def get_hidden_point_from_ids(points, ids, camera_flag):
                         colinear_point2, y_inf).tolist()
 
 
-def slika1():
-    points = read_two_camera_points("tmp.txt")
+def slika1(src_data, dest_data):
+    points = read_two_camera_points(src_data)
 
     camera1_point5 = get_hidden_point_from_ids(points, [4, 8, 6, 2, 1, 4, 3, 2, 1, 8], 0)
     camera2_point5 = get_hidden_point_from_ids(points, [4, 8, 6, 2, 1, 4, 3, 2, 1, 8], 1)
@@ -58,7 +58,7 @@ def slika1():
     points[13] = [camera1_point13, camera2_point13]
     points[16] = [camera1_point16, camera2_point16]
 
-    save_points(points, "slika1.txt")
+    save_points(points, dest_data)
 
 
 def hidden_point(colinear_pt1, vanishing_pt1,
@@ -230,7 +230,7 @@ def read_two_camera_points(path):
 
 
 def main():
-    slika1()
+    slika1("data/tmp.txt", "data/slika1.txt")
 
 
 if __name__ == '__main__':

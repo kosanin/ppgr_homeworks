@@ -20,14 +20,14 @@ def init():
     glLineWidth(2)
 
     # racunanje fundamentalne matrice
-    local_points = reconstruction.read_two_camera_points("init_tacke.txt")
+    local_points = reconstruction.read_two_camera_points("data/init_tacke.txt")
     k1 = list(map(lambda x : x[0], local_points.values()))
     k2 = list(map(lambda x : x[1], local_points.values()))
     f = reconstruction.fundamental_matrix(k1, k2)
     f1 = reconstruction.normalized_fundamental_matrix(f)
 
     # rekonstrukcija 3D koordinata
-    local_points = reconstruction.read_two_camera_points("slika1.txt")
+    local_points = reconstruction.read_two_camera_points("data/slika1.txt")
     points = reconstruction.triangulation(local_points, f1)
 
     # z koordinata je znatno manja od ostalih, pa je skaliramo za 400
