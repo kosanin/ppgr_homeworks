@@ -3,30 +3,39 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 import draw
 import math
+import numpy as np
 import reconstruction
 
 points = []
 alpha = 0
 beta = 0
 r = 700
+centroid = []
+
 
 def init():
-    global points
+    global points, centroid
     glClearColor(0.7, 0.7, 0.7, 0)
     glEnable(GL_DEPTH_TEST)
     glLineWidth(2)
 
+    # racunanje fundamentalne matrice
     local_points = reconstruction.read_two_camera_points("init_tacke.txt")
     k1 = list(map(lambda x : x[0], local_points.values()))
     k2 = list(map(lambda x : x[1], local_points.values()))
     f = reconstruction.fundamental_matrix(k1, k2)
+    f1 = reconstruction.normalized_fundamental_matrix(f)
 
-    local_points = reconstruction.read_two_camera_points("slika1_input_points.txt")
-    points = reconstruction.triangulation(local_points, f)
+    # rekonstrukcija 3D koordinata
+    local_points = reconstruction.read_two_camera_points("slika1.txt")
+    points = reconstruction.triangulation(local_points, f1)
+
+    # z koordinata je znatno manja od ostalih, pa je skaliramo za 400
     for p in points:
-        p[2] = 200
-    
+        p[2] *= 400
 
+    # dobijeni objekat transliramo za -centroid
+    centroid = np.mean(points, axis=0)
 
 
 def on_keyboard(key, x, y):
@@ -59,14 +68,14 @@ def on_display():
         0, 0, 0,
         0, 1, 0)
 
-    glTranslatef(-491, -1, 0)    
+    glTranslatef(-centroid[0], -centroid[1], -centroid[2])    
     draw.reconstructed_cubes(points)
+
     glutSwapBuffers()
 
 
 def on_reshape(w, h):
     glViewport(0, 0, w, h)
-
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(60, w / float(h), 1, 1000)
@@ -80,7 +89,6 @@ def set_callbacks():
 
 
 def main():
-    
     glutInit()
     glutInitDisplayMode(GLUT_RGB|GLUT_DEPTH|GLUT_DOUBLE)
     glutInitWindowSize(600, 600)
@@ -89,8 +97,8 @@ def main():
     init()
     set_callbacks()
 
-
     glutMainLoop()
+
 
 if __name__ == "__main__":
     main()
