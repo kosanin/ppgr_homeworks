@@ -43,7 +43,7 @@ def slika2_reconstructed_cubes(ps):
     glVertex3f(ps[5][0], ps[5][1], ps[5][2])
 
     # phone box
-    glColor3f(0, 1, 0)
+    glColor3f(1, 1, 0)
     glVertex3f(ps[8][0], ps[8][1], ps[8][2])
     glVertex3f(ps[9][0], ps[9][1], ps[9][2])
 
