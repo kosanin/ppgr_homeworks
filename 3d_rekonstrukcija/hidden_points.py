@@ -9,8 +9,8 @@ def slika2(src, dest):
     points[5] = [camera1_point5, camera2_point5]
 
     # skrivena tacka 6
-    camera1_point6 = get_hidden_point_from_ids(points, [5, 1, 8, 4, 4, 3, 8, 7, 5, 7], 0)
-    camera2_point6 = get_hidden_point_from_ids(points, [5, 1, 8, 4, 4, 3, 8, 7, 5, 7], 1)
+    camera1_point6 = get_hidden_point_from_ids(points, [4, 1, 3, 2, 4, 3, 8, 7, 7, 5], 0)
+    camera2_point6 = get_hidden_point_from_ids(points, [4, 1, 3, 2, 4, 3, 8, 7, 7, 5], 1)
     points[6] = [camera1_point6, camera2_point6]
 
 
@@ -46,6 +46,7 @@ def slika2(src, dest):
     points[22] = [camera1_point22, camera2_point22]
 
     save_points(points, dest)
+
 
 def slika1(src_data, dest_data):
     points = read_two_camera_points(src_data)
